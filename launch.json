@@ -1,0 +1,22 @@
+{
+  "kind": "evm_project",
+  "token": {
+    "contract": "LaunchToken",
+    "name": "Stake Launch Token",
+    "symbol": "STK",
+    "decimals": 18
+  },
+  "contracts": [
+    {
+      "contract": "StakingVault",
+      "constructorArgs": ["$token", "604800"]
+    }
+  ],
+  "pool": {
+    "pairedCurrency": "0x0000000000000000000000000000000000000000",
+    "fee": 3000,
+    "tickSpacing": 60,
+    "initialPrice": "79228162514264337593543950336"
+  },
+  "notes": "Launch of the fixed-supply launch token (src/LaunchToken.sol, no constructor arguments, 18 decimals, 1,000,000,000 tokens minted to the deploying factory) and one application contract, StakingVault (src/StakingVault.sol). StakingVault constructor: (address token_, uint256 rewardsDuration_). token_ is $token, the launch token, which is both the staked asset and the reward asset. rewardsDuration_ is 604800 seconds (7 days): every fundRewards call starts a reward period of this length. The constructor reverts on a zero token address or a zero duration, is nonpayable, does not read msg.sender and holds no tokens at deployment, so the factory's supply check is unaffected. The vault has no owner, no pause, no sweep, no upgrade path and no privileged role; there is no $owner argument because nothing in the project can exercise one. Behaviour: stake(amount) pulls approved tokens and locks the caller's whole position for LOCK_PERIOD, a constant 7 days from the latest stake; withdraw(amount) and exit() return principal only after the lock expires and only to the account that staked it; fundRewards(amount) is permissionless and streams the funded tokens per second over rewardsDuration pro rata to stake, rolling any unstreamed remainder into the new period and refusing a new rate lower than the running one; rewards streamed while nothing is staked are kept as undistributed and re-streamed by the next funding; claim() pays accrued rewards at any time. Principal and rewards share one balance, and every outflow is bounded by what the caller staked or by rewards that were funded, which the invariant tests check. The pool pairs the launch token with native ETH; fee, tickSpacing and initialPrice are the admission defaults, and the deployer derives the effective opening price from the pinned policy. The factory supplies the LP position, MerkleDistributor and PoolInitializationGuard; none are project contracts. No initialization calls are needed."
+}
